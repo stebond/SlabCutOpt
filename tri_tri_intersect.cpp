@@ -571,5 +571,5 @@ int tri_tri_overlap_test_2d(double p1[2], double q1[2], double r1[2],
       return ccw_tri_tri_intersection_2d(p1,q1,r1,p2,q2,r2);
 
 };
-#include "stdafx.h"//questa non so perchè ci vuole...!!!!!!!!!!!!!!!!!!!
+
 

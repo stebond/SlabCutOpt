@@ -1,7 +1,7 @@
 // SlabCutOpt.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
+
 #include "SlabCutOpt.h"
 #include "tri_tri_intersect.cpp"
 #include <iostream>
