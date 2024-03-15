@@ -140,19 +140,19 @@ struct Blocks ***myBlocks;
 
 //new functions:
 int CreateBlocks3(solution_struc&, Blocks ***&);
-int CreateBlocks5(solution_struc&, std::vector<std::vector<std::vector<Blocks>>>&);
+int CreateBlocks5(solution_struc&, std::vector<std::vector<std::vector<Blocks> > >&);
 
-int CheckBlocks3(solution_struc &, std::vector<std::vector<std::vector<Blocks>>>&);
+int CheckBlocks3(solution_struc &, std::vector<std::vector<std::vector<Blocks> > >&);
 
-int MoveBlocks3(solution_struc&, std::vector<std::vector<std::vector<Blocks>>>&);
+int MoveBlocks3(solution_struc&, std::vector<std::vector<std::vector<Blocks> > >&);
 
 int block_intersection2(solution_struc&,Blocks***&);
-int block_intersection3(solution_struc&, std::vector<std::vector<std::vector<Blocks>>>&);
+int block_intersection3(solution_struc&, std::vector<std::vector<std::vector<Blocks> > >&);
 
 int freemem2(solution_struc&,Blocks***&);
-int freemem3(solution_struc&, std::vector<std::vector<std::vector<Blocks>>>&);
+int freemem3(solution_struc&, std::vector<std::vector<std::vector<Blocks> > >&);
 int printVTU_Blocks2(char *, solution_struc&, Blocks ***&);
-int printVTU_Blocks3(char *, solution_struc&, std::vector<std::vector<std::vector<Blocks>>>&);
+int printVTU_Blocks3(char *, solution_struc&, std::vector<std::vector<std::vector<Blocks> > >&);
 int initialize(void);
 int rotate_point(double, double, double,double *&/*in-out*/);
 int rotate_point2(double, double, double, double *&/*in-out*/);

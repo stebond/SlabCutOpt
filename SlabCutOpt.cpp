@@ -15,14 +15,35 @@
 int main()
 {
     //model parameters
+    printf("**************************************************\n");
+    printf("*         DICAM - University of Bologna          *\n");
+    printf("*          SlabCutOpt - ver.1.0 (2024)           *\n");
+    printf("**************************************************\n");
+    printf("*A computer code for Slabs Cutting Optimization. *\n");
+    printf("**************************************************\n");
+    printf("*Authors:                                        *\n");
+    printf("Stefano Bondua, Sara Focaccia, Mohamed Elkarmoty *\n");
+    printf("**************************************************\n");
+    printf("*For any information please contact:             *\n");
+    printf("*                 stefano.bondua@unibo.it        *\n");
+    printf("**************************************************\n");
+	
     
-	int start_s = clock();
+    
+    
+    
+    int start_s = clock();
 
 	
     
     FILE *fp_log;
-    errno_t err;
-    err = fopen_s(&fp_log, "results.log", "w");
+    
+    fp_log = fopen("results.log", "w");
+    if (fp_log == NULL)
+    {
+        printf("results.log file open error, program will exit with code 5\n");
+        return 5;
+    }
     fprintf(fp_log, "Optimization results:\n");
     fclose(fp_log);
     if (readParameter("SlabCutOpt.par"))
@@ -31,7 +52,9 @@ int main()
 
     }
     //
-	write_parameters();
+    printf("write_parameters\n");
+    write_parameters();
+    printf("initialize\n");
     initialize();
     if (read_PLY_FileList) 
     {
@@ -39,14 +62,25 @@ int main()
         for (int i = 0; i < ply_file_name.size(); i++)
         {
             FILE *f_in = fopen(ply_file_name[i].c_str(), "rt");
+            if (f_in == NULL)
+            {
+                printf("ply[%d] file open error, program will exit with code 5\n",i);
+                return 5;
+            }
             read_PLY_file(f_in);
             fclose(f_in);
+            
         }
-
+        printf("reading ply file end\n");
     }
     else 
     {
         FILE *f_in = fopen("test_fractures.ply", "rt");
+        if (f_in == NULL)
+        {
+            printf("test_fractures.ply file open error, program will exit with code 5\n");
+            return 5;
+        }
         read_PLY_file(f_in);
         fclose(f_in);
     }
@@ -55,9 +89,15 @@ int main()
     if (read_bound)
     {
         FILE *f_bounds = fopen("bounds.dat", "rt");
+        if (f_bounds == NULL)
+        {
+            printf("bounds.dat file open error, program will exit with code 5\n");
+            return 5;
+        }
         read_BOUNDS_file(f_bounds);
 
     }
+    printf("read_block_domensions\n");
     if (read_block_dimension)
     {
         
@@ -85,13 +125,18 @@ int main()
 
 	}
 
-    err = fopen_s(&fp_log, "results.log", "a");
-    fprintf(fp_log, "Number of dimensions to test: %d\n", blocks_dimensions_vector.size());
+    fp_log= fopen("results.log", "a");
+    if (fp_log == NULL)
+    {
+        printf("results.log file open error, program will exit with code 5\n");
+        return 5;
+    }
+    fprintf(fp_log, "Number of dimensions to test: %d\n",(int) blocks_dimensions_vector.size());
     for (int i = 0; i < blocks_dimensions_vector.size(); i++)
     {
         fprintf(fp_log, "[%d] dim_block_x= %f dim_block_y= %f dim_block_z= %f\n",i, blocks_dimensions_vector[i].dim_x, blocks_dimensions_vector[i].dim_y, blocks_dimensions_vector[i].dim_z);
     }
-    fprintf(fp_log, "n_triangles=%d\n", mesh_to_approx.size());
+    fprintf(fp_log, "n_triangles=%d\n", (int) mesh_to_approx.size());
     fprintf(fp_log, "\n");
     fprintf(fp_log, "N_iter i_x_zone i_y_zone i_k_zone dim_block_x dim_block_y dim_block_z Tetha Phi Csi dx dy dz n_block_inside n_block_no_intersect\n");
     fclose(fp_log);
@@ -103,7 +148,7 @@ int main()
 	//solutions: The vector holding the whole space of solutions
 	std::vector<solution_struc> solutions;
     printf("Preparing solutions...\n");
-	std::vector<std::vector<std::vector<std::vector<best_results_struc>>>>optimum_solutions;
+	std::vector<std::vector<std::vector<std::vector<best_results_struc> > > >optimum_solutions;
 	
 	optimum_solutions.resize(n_x_division);
 	for (int i = 0; i < n_x_division; i++)
@@ -177,7 +222,7 @@ int main()
     }
     //////////////////////////////////////////////////////////////////////
     printf("Start computation...\n");
-	printf("Number of solutions is=%d\n",solutions.size());
+	printf("Number of solutions is=%d\n",(int)solutions.size());
 	int count = 0;
 	int reported_count = 0;
 	int step_size = (int)solutions.size() / 10;
@@ -188,7 +233,7 @@ int main()
     {
         int n_proc = omp_get_thread_num();
 		int n_threads = omp_get_num_threads();
-        std::vector<std::vector<std::vector<Blocks>>>vectBlocks;
+        std::vector<std::vector<std::vector<Blocks> > >vectBlocks;
 		CreateBlocks5(solutions[i], vectBlocks);
 		MoveBlocks3(solutions[i], vectBlocks);
 		int n_block_inside2 = CheckBlocks3(solutions[i], vectBlocks);
@@ -197,7 +242,7 @@ int main()
 		solutions[i].n_block_no_intersect = n_block_no_intersect2;
         //printf("Calculated solution %d of %d with processor %d block_inside=%d block_no_intersect=%d\n", i, solutions.size(), n_proc, solutions[i].n_block_inside, solutions[i].n_block_no_intersect);
         char buffer[200];
-        sprintf_s(buffer, "Blocks_vect%d.vtu", i);
+        sprintf(buffer, "Blocks_vect%d.vtu", i);
 		if (write_vtu==1)printVTU_Blocks3(buffer, solutions[i], vectBlocks);
 		freemem3(solutions[i], vectBlocks);
 #pragma omp atomic
@@ -211,7 +256,7 @@ int main()
 			
 			double remaing_time_s = elaspsedtime_s / count*(double)(solutions.size()-count);
 			double remaing_time_days=remaing_time_s/ (24 * 60 * 60);
-			printf("Iter: %d of %d (%.2f%%) Elapsed t: %.1f(s) %.2f(days).End in: %.1f(s) %.2f(days) using %d threads\n", count, solutions.size(), percentage, elaspsedtime_s, elaspsedtime_days, remaing_time_s, remaing_time_days, n_threads);
+			printf("Iter: %d of %d (%.2f%%) Elapsed t: %.1f(s) %.2f(days).End in: %.1f(s) %.2f(days) using %d threads\n", count, (int)solutions.size(), percentage, elaspsedtime_s, elaspsedtime_days, remaing_time_s, remaing_time_days, n_threads);
 			reported_count = count;
 		}
 
@@ -224,7 +269,12 @@ int main()
 	//MODIFICARE SCRITTURA PER LE SINGOLE ZONE
 	////
 	////
-	err = fopen_s(&fp_log, "results.log", "a");
+	fp_log=fopen("results.log", "a");
+    if (fp_log == NULL)
+    {
+        printf("results.log file open error, program will exit with code 5\n");
+        return 5;
+    }
 	int old_dim = -1;
 	for (int i = 0; i < solutions.size(); i++)
     {
@@ -263,8 +313,8 @@ int main()
 					{
 						int i_opt = optimum_solutions[i_n_x_division][i_n_y_division][i_n_z_division][i].solution_number;
 						char buffer[200];
-						sprintf_s(buffer, "Blocks_opt_i_%d_j_%d_k_%d_%d_%d.vtu", i_n_x_division,i_n_y_division,i_n_z_division, i, i_opt);
-						std::vector<std::vector<std::vector<Blocks>>>vectBlocks;
+						sprintf(buffer, "Blocks_opt_i_%d_j_%d_k_%d_%d_%d.vtu", i_n_x_division,i_n_y_division,i_n_z_division, i, i_opt);
+						std::vector<std::vector<std::vector<Blocks> > >vectBlocks;
 						CreateBlocks5(solutions[i_opt], vectBlocks);
 						MoveBlocks3(solutions[i_opt], vectBlocks);
 						int n_block_inside2 = CheckBlocks3(solutions[i_opt], vectBlocks);
@@ -284,11 +334,16 @@ int main()
 int write_parameters() 
 {
 	FILE *fp_log;
-	errno_t err;
-	err = fopen_s(&fp_log, "results.log", "w");
+	//errno_t err;
+	fp_log = fopen("results.log", "w");
+    if (fp_log == NULL)
+    {
+        printf("results.log file open error, program will exit with code 5\n");
+        return 5;
+    }
 	fprintf(fp_log, "*************************************************\n");
 	fprintf(fp_log, "*         DICAM - University of Bologna         *\n");
-	fprintf(fp_log, "*          SlabCutOpt - ver.1.0 (2018)          *\n");
+	fprintf(fp_log, "*          SlabCutOpt - ver.1.0 (2024)          *\n");
 	fprintf(fp_log, "*************************************************\n");
 	fprintf(fp_log, "*A computer code for Slabs Cutting Optimization.*\n");
 	fprintf(fp_log, "*************************************************\n");
@@ -438,8 +493,13 @@ int initialize()
 
 
     FILE *fp_bounds;
-    errno_t err;
-    err = fopen_s(&fp_bounds, "bounds.ply", "w");
+    //errno_t err;
+    fp_bounds = fopen("bounds.ply", "w");
+    if (fp_bounds == NULL)
+    {
+        printf("results.log file open error, program will exit with code 5\n");
+        return 5;
+    }
     fprintf(fp_bounds, "ply\nformat ascii 1.0\nComment Exported by voro2mesh\nelement vertex 8\nproperty float x\nproperty float y\nproperty float z\nelement face 6\nproperty list uchar int vertex_index\nend_header\n");
     fprintf(fp_bounds, "%f %f %f\n", xmin, ymin, zmin);
     fprintf(fp_bounds, "%f %f %f\n", xmax, ymin, zmin);
@@ -464,9 +524,13 @@ int CreateTriangles3() {
     n_triangles = n_triangle;
 
     FILE *fp_mesh;
-    errno_t err;
-    err = fopen_s(&fp_mesh, "test_surface.ply", "w");
-    
+    //errno_t err;
+    fp_mesh= fopen("test_surface.ply", "w");
+    if (fp_mesh == NULL)
+    {
+        printf("results.log file open error, program will exit with code 5\n");
+        return 5;
+    }
     fprintf(fp_mesh, "ply\nformat ascii 1.0\nComment Exported by voro2mesh\nelement vertex 6\nproperty float x\nproperty float y\nproperty float z\nelement face 2\nproperty list uchar int vertex_index\nend_header\n");
 
 
@@ -715,9 +779,14 @@ int printVTU_Blocks2(char *nomefile,solution_struc &solution, Blocks ***&blocks)
 {
     //printing the output blocks configuration
     FILE *fp;
-    errno_t err;
-    err = fopen_s(&fp, nomefile, "w");
-    int total_particles = solution.nx*solution.ny*solution.nz;
+    //errno_t err;
+    fp= fopen(nomefile, "w");
+    if (fp == NULL)
+    {
+        printf("file open error, program will exit with code 5\n");
+        return 5;
+    }
+    unsigned int total_particles = solution.nx*solution.ny*solution.nz;
     int total_vertex = total_particles * 8;
     double xmin_l = +1e35, xmax_l = -1e35, ymin_l = +1e35, ymax_l = -1e35, zmin_l = +1e35, zmax_l = -1e35;
     for (int i = 0; i < solution.nx; i++)
@@ -898,12 +967,18 @@ int printVTU_Blocks2(char *nomefile,solution_struc &solution, Blocks ***&blocks)
     return 0;
 
 }
-int printVTU_Blocks3(char *nomefile, solution_struc &solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+int printVTU_Blocks3(char *nomefile, solution_struc &solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 {
 	//printing the output blocks configuration
 	FILE *fp;
-	errno_t err;
-	err = fopen_s(&fp, nomefile, "w");
+	//errno_t err;
+	 fp= fopen(nomefile, "w");
+     if (fp == NULL)
+     {
+         printf("\n\n\n\t\t\t\t OPEN %s FILE ERROR", nomefile);
+         printf("file open error, program will exit with code 5\n");
+         return 5;
+     }
 	int total_particles = solution.nx*solution.ny*solution.nz;
 	int total_vertex = total_particles * 8;
 	double xmin_l = +1e35, xmax_l = -1e35, ymin_l = +1e35, ymax_l = -1e35, zmin_l = +1e35, zmax_l = -1e35;
@@ -1108,7 +1183,7 @@ int freemem2(solution_struc &solution,Blocks ***&blocks)
     delete[] blocks;
     return 0;
 }
-int freemem3(solution_struc &solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+int freemem3(solution_struc &solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 {
 	for (int i = 0; i < solution.nx; i++)
 	{
@@ -1168,7 +1243,7 @@ int freemem3(solution_struc &solution, std::vector<std::vector<std::vector<Block
 //
 //}
 
-int block_intersection3(solution_struc& solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+int block_intersection3(solution_struc& solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 {
 	int n_blocks_no_intersected = 0;
 
@@ -1288,7 +1363,7 @@ int rotate_point2(double tetha, double phi, double csi, double *&point)
 }
 
 
-int MoveBlocks3(solution_struc &solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+int MoveBlocks3(solution_struc &solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 {
 	//rotation:the center of rotation is X0 Y0 Z0
 
@@ -1348,7 +1423,7 @@ int pnpoly(int nvert, double *vertx, double *verty, double testx, double testy)
     return c;
 }
 
-//int CreateBlocks4(solution_struc &solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+//int CreateBlocks4(solution_struc &solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 //{
 //	//da modificare: ogni volta ne dobbiamo usare un numero diverso?
 //	int nx=1;
@@ -1557,7 +1632,7 @@ int pnpoly(int nvert, double *vertx, double *verty, double testx, double testy)
 //	}
 //	return 0;
 //}
-int CreateBlocks5(solution_struc &solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+int CreateBlocks5(solution_struc &solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 {
 	//da modificare: ogni volta ne dobbiamo usare un numero diverso?
 	int nx = 1;
@@ -1651,7 +1726,7 @@ int CreateBlocks5(solution_struc &solution, std::vector<std::vector<std::vector<
 	}
 	return 0;
 }
-int CheckBlocks3(solution_struc&solution, std::vector<std::vector<std::vector<Blocks>>>&blocks)
+int CheckBlocks3(solution_struc&solution, std::vector<std::vector<std::vector<Blocks> > >&blocks)
 {
 	int n_blocks_inside = 0;
 	for (int i = 0; i < solution.nx; i++)
@@ -1925,10 +2000,10 @@ int readParameter(const char* Nomefilein) {
     int EndFile;
     std::string head, value;
     //char str[1000];
-    errno_t err;
+    //errno_t err;
 
-    err=fopen_s(&f_in,Nomefilein, "rt");
-    if (err) {
+    f_in=fopen(Nomefilein, "rt");
+    if (f_in==NULL) {
         printf("\n\n\n\t\t\t\t OPEN INPUT %s FILE ERROR", Nomefilein);
         return 1;
     }
@@ -2106,12 +2181,12 @@ int readPLY_FileList(void)
 {
     int verbose = 1;
     FILE *fp_PLY_FileList;
-    errno_t err;
+    //errno_t err;
     std::string lines(10000, ' ');
     std::string head, value;
     int EndFile;
-    err = fopen_s(&fp_PLY_FileList, "PLY_FileList.dat", "r");
-    if (err)
+    fp_PLY_FileList= fopen("PLY_FileList.dat", "r");
+    if (fp_PLY_FileList==NULL)
     {
         printf("PLY_FileList.dat file open error, program will exit with code 5\n");
         return 5;
@@ -2145,14 +2220,15 @@ int read_blocks_dimensions()
 {
     if (verbose)printf("read_ending_points()\n");
     FILE *fp_ending_points;
-    errno_t err;
+    //errno_t err;
     std::string lines(10000, ' ');
     std::string head, value;
     int EndFile;
-    err = fopen_s(&fp_ending_points, "slab_dimensions.dat", "r");
-    if (err)
+    fp_ending_points= fopen("slab_dimensions.dat", "r");
+    
+    if (fp_ending_points==NULL)
     {
-        printf("seed_points.dat file not found\n");
+        printf("slab_dimensions.dat file not found\n");
         return 5;
     }
     int n_line = 0;
